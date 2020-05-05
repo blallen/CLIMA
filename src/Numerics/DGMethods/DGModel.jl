@@ -579,7 +579,7 @@ function init_ode_state(dg::DGModel, args...; init_on_cpu = false)
     else
         h_state_conservative = similar(state_conservative, Array)
         h_state_auxiliary = similar(state_auxiliary, Array)
-        h_state_auxiliary .= state_auxiliary
+        copyto!(h_state_auxiliary, state_auxiliary)
         event = kernel_init_state_conservative!(CPU(), Np)(
             balance_law,
             Val(dim),
@@ -592,7 +592,7 @@ function init_ode_state(dg::DGModel, args...; init_on_cpu = false)
             ndrange = Np * nrealelem,
         )
         wait(event) # XXX: This could be `wait(device, event)` once KA supports that.
-        state_conservative .= h_state_conservative
+        copyto!(state_conservative, h_state_conservative)
     end
 
     event = Event(device)
