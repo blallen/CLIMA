@@ -10,12 +10,13 @@ using ..VariableTemplates
 using ..MPIStateArrays
 using ..Mesh.Filters: apply!
 using ..Mesh.Grids: VerticalDirection
-using ..BalanceLaws: BalanceLaw
-import ..BalanceLaws: nodal_update_auxiliary_state!
-using ..DGMethods.NumericalFluxes: RusanovNumericalFlux
+using ..Mesh.Geometry
+using ..DGMethods
+using ..DGMethods.NumericalFluxes
+using ..BalanceLaws
 
 import ..DGMethods.NumericalFluxes: update_penalty!
-import ..DGMethods:
+import ..BalanceLaws:
     vars_state_conservative,
     vars_state_auxiliary,
     vars_state_gradient,
@@ -40,13 +41,6 @@ import ..DGMethods:
     wavespeed,
     update_auxiliary_state!,
     update_auxiliary_state_gradient!
-
-using ..DGMethods: DGModel, copy_stack_field_down!
-using ..Mesh.Geometry: LocalGeometry
-
-using ..DGMethods.NumericalFluxes: RusanovNumericalFlux
-
-import ..DGMethods.NumericalFluxes: update_penalty!
 
 ×(a::SVector, b::SVector) = StaticArrays.cross(a, b)
 ⋅(a::SVector, b::SVector) = StaticArrays.dot(a, b)
@@ -635,13 +629,14 @@ function update_auxiliary_state_gradient!(
     indefinite_stack_integral!(dg, m, Q, A, t, elems) # bottom -> top
     reverse_indefinite_stack_integral!(dg, m, Q, A, t, elems) # top -> bottom
 
+    Nq, Nqk, _, _, nelemv, _, nelemh, _ = basic_grid_info(dg)
+
     # project w(z=0) down the stack
-    # [1] to convert from range to integer
-    # copy_stack_field_down! doesn't like ranges
-    # eventually replace this with a reshape and broadcast
-    index_w = varsindex(vars_state_auxiliary(m, FT), :w)[1]
-    index_wz0 = varsindex(vars_state_auxiliary(m, FT), :wz0)[1]
-    copy_stack_field_down!(dg, m, A, index_w, index_wz0, elems)
+    boxy_w = reshape(A.w, Nq^2, Nqk, 1, nelemv, nelemh)
+    flat_w = @view boxy_w[:, end, :, end, :]
+    flat_wz0 = reshape(flat_w, Nq^2, 1, 1, 1, nelemh)
+    boxy_wz0 = reshape(A.wz0, Nq^2, Nqk, 1, nelemv, nelemh)
+    boxy_wz0 .= flat_wz0
 
     return true
 end
