@@ -631,11 +631,17 @@ function update_auxiliary_state_gradient!(
 
     Nq, Nqk, _, _, nelemv, _, nelemh, _ = basic_grid_info(dg)
 
+    # We are unable to use vars (ie A.w) for this because this operation will
+    # return a SubArray, and adapt (used for broadcasting along reshaped arrays)
+    # has a limited recursion depth for the types allowed.
+    index_w = varsindex(vars_state_auxiliary(m, FT), :w)[1]
+    index_wz0 = varsindex(vars_state_auxiliary(m, FT), :wz0)[1]
+
     # project w(z=0) down the stack
-    boxy_w = reshape(A.w, Nq^2, Nqk, 1, nelemv, nelemh)
+    boxy_w = reshape(A.data[:,index_w,:], Nq^2, Nqk, 1, nelemv, nelemh)
     flat_w = @view boxy_w[:, end, :, end, :]
     flat_wz0 = reshape(flat_w, Nq^2, 1, 1, 1, nelemh)
-    boxy_wz0 = reshape(A.wz0, Nq^2, Nqk, 1, nelemv, nelemh)
+    boxy_wz0 = reshape(A.data[:,index_wz0,:], Nq^2, Nqk, 1, nelemv, nelemh)
     boxy_wz0 .= flat_wz0
 
     return true
