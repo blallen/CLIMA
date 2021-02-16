@@ -3,6 +3,65 @@
 #######
 
 """
+Pressure terms
+
+currently isotropic or anisotropic
+"""
+
+abstract type Pressure end
+struct IsotropicPressure{T} <: Pressure
+    cₛ::T # m/s
+    ρₒ::T # kg/m³
+    function IsotropicPressure{T}(;
+        cₛ = T(sqrt(10)),
+        ρₒ = T(1),
+    ) where {T <: AbstractFloat}
+        return new{T}(cₛ, ρₒ)
+    end
+end
+
+@inline sound_speed(i::IsotropicPressure) = @SVector [i.cₛ, i.cₛ, i.cₛ]
+
+@inline function pressure(i::IsotropicPressure, state, aux)
+    ρ = state.ρ
+    ρₒ = i.ρₒ
+
+    k̂ = aux.orientation.∇ϕ
+    c² = i.cₛ^2 * I
+
+    p = ρ^2 / (2 * ρₒ) * c²
+
+    return p
+end
+
+struct AnisotropicPressure{T} <: Pressure
+    cₛ::T # m/s
+    cᶻ::T # m/s
+    ρₒ::T # kg/m³
+    function AnisotropicPressure{T}(;
+        cₛ = T(sqrt(10)),
+        cᶻ = T(sqrt(10) / 1000),
+        ρₒ = T(1),
+    ) where {T <: AbstractFloat}
+        return new{T}(cₛ, cᶻ, ρₒ)
+    end
+end
+
+@inline sound_speed(a::AnisotropicPressure) = @SVector [a.cₛ, a.cₛ, a.cᶻ]
+
+@inline function pressure(a::AnisotropicPressure, state, aux)
+    ρ = state.ρ
+    ρₒ = a.ρₒ
+
+    k̂ = aux.orientation.∇ϕ
+    c² = a.cₛ^2 * I + (a.cᶻ^2 - a.cₛ^2) * k̂ * k̂'
+
+    p = ρ^2 / (2 * ρₒ) * c²
+
+    return p
+end
+
+"""
 Advection terms
 
 right now really only non-linear or ::Nothing
@@ -89,7 +148,9 @@ polynomialorders(model::SpatialModel) = convention(
 
 abstract type ModelPhysics end
 
-Base.@kwdef struct FluidPhysics{𝒜, 𝒟, 𝒞, ℬ} <: ModelPhysics
+Base.@kwdef struct FluidPhysics{𝒪, 𝒫, 𝒜, 𝒟, 𝒞, ℬ} <: ModelPhysics
+    orientation::𝒪 = ClimateMachine.Orientations.FlatOrientation()
+    pressure::𝒫 = nothing
     advection::𝒜 = NonLinearAdvectionTerm()
     dissipation::𝒟 = nothing
     coriolis::𝒞 = nothing

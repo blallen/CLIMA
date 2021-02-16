@@ -41,17 +41,26 @@ function Config(
         meshwarp = equiangular_cubed_sphere_warp,
     )
 
-    model = CNSE3D{FT}(
+    if (params.cᶻ == params.cₛ)
+        pressure = IsotropicPressure{FT}(cₛ = params.cₛ, ρₒ = params.ρₒ)
+    else
+        pressure = AinsotropicPressure{FT}(
+            cₛ = params.cₛ,
+            cᶻ = params.cᶻ,
+            ρₒ = params.ρₒ,
+        )
+    end
+
+    model = CNSE3D(
         nothing,
         (domain.min_height, domain.max_height),
+        ClimateMachine.Orientations.SphericalOrientation(),
+        pressure,
         NonLinearAdvectionTerm(),
         ConstantViscosity{FT}(μ = params.μ, ν = params.ν, κ = params.κ),
         nothing,
         nothing,
-        boundary_conditons;
-        cₛ = params.cₛ,
-        ρₒ = params.ρₒ,
-    )
+        boundary_conditons,
 
     dg = DGModel(
         model,
