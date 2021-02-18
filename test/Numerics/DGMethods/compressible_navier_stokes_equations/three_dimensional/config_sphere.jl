@@ -9,7 +9,7 @@ function Config(
     numerical_flux_first_order = RoeNumericalFlux(),
     Nover = 0,
     boundary = (1, 1),
-    boundary_conditons = (FluidBC(Impenetrable(FreeSlip()), Insulating()),),
+    boundary_conditions = (FluidBC(Impenetrable(FreeSlip()), Insulating()),),
 )
     mpicomm = MPI.COMM_WORLD
     ArrayType = ClimateMachine.array_type()
@@ -42,13 +42,18 @@ function Config(
     )
 
     if (params.cᶻ == params.cₛ)
-        pressure = IsotropicPressure{FT}(cₛ = params.cₛ, ρₒ = params.ρₒ)
+        pressure =
+            ThreeDimensionalCompressibleNavierStokes.IsotropicPressure{FT}(
+                cₛ = params.cₛ,
+                ρₒ = params.ρₒ,
+            )
     else
-        pressure = AinsotropicPressure{FT}(
-            cₛ = params.cₛ,
-            cᶻ = params.cᶻ,
-            ρₒ = params.ρₒ,
-        )
+        pressure =
+            ThreeDimensionalCompressibleNavierStokes.AnisotropicPressure{FT}(
+                cₛ = params.cₛ,
+                cᶻ = params.cᶻ,
+                ρₒ = params.ρₒ,
+            )
     end
 
     model = CNSE3D(
@@ -60,7 +65,8 @@ function Config(
         ConstantViscosity{FT}(μ = params.μ, ν = params.ν, κ = params.κ),
         nothing,
         nothing,
-        boundary_conditons,
+        boundary_conditions,
+    )
 
     dg = DGModel(
         model,

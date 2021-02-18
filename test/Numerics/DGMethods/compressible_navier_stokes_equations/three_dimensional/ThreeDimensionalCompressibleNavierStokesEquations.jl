@@ -121,12 +121,12 @@ function cnse_init_state!(
     return nothing
 end
 
-function vars_state(m::CNSE3D, ::Auxiliary, T)
+function vars_state(m::CNSE3D, st::Auxiliary, T)
     @vars begin
         x::T
         y::T
         z::T
-        orientation::vars_state(m.orientation, st, FT)
+        orientation::vars_state(m.orientation, st, T)
     end
 end
 
@@ -404,7 +404,7 @@ forcing_term!(::CNSE3D, ::Nothing, _...) = nothing
     source.ρu += @SVector [-0, -0, B]
 end
 
-@inline wavespeed(m::CNSE3D, _...) = m.cₛ
+@inline wavespeed(m::CNSE3D, n⁻, _...) = n⁻ ⋅ sound_speed(m.pressure)
 
 roe_average(ρ⁻, ρ⁺, var⁻, var⁺) =
     (sqrt(ρ⁻) * var⁻ + sqrt(ρ⁺) * var⁺) / (sqrt(ρ⁻) + sqrt(ρ⁺))
@@ -437,6 +437,7 @@ function numerical_flux_first_order!(
     FT = eltype(fluxᵀn)
 
     # constants and normal vectors
+    ρₒ = model.pressure.ρₒ
     c = n⁻ ⋅ sound_speed(model.pressure)
 
     # - states

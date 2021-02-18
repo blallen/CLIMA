@@ -34,12 +34,10 @@ callbacks = (Info(), StateCheck(10))
 ########
 # Define physical parameters and parameterizations
 ########
-parameters = (
-    ρₒ = 1, # reference density
-    cₛ = sqrt(10), # sound speed
-)
+parameters = ()
 
 physics = FluidPhysics(;
+    pressure = IsotropicPressure{Float64}(cₛ = sqrt(10), ρₒ = 1),
     advection = NonLinearAdvectionTerm(),
     dissipation = ConstantViscosity{Float64}(μ = 0, ν = 1e-2, κ = 1e-2),
     coriolis = nothing,

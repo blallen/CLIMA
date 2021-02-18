@@ -13,7 +13,7 @@ function cnse_init_state!(model::CNSE3D, state, aux, localgeo, t)
     y = aux.y
     z = aux.z
 
-    ρ = model.ρₒ
+    ρ = model.pressure.ρₒ
     state.ρ = ρ
     state.ρu = @SVector [-0, -0, -0]
     state.ρθ = ρ
@@ -37,6 +37,7 @@ let
     nout = Int(1000)
 
     # Domain Resolution
+    """
     N = 4
     Nʰ = 8
     Nᶻ = 6
@@ -44,7 +45,7 @@ let
     N = 1
     Nʰ = 18
     Nᶻ = 30
-    """
+
 
     # Domain size
     min_height = 0.5
@@ -54,6 +55,7 @@ let
 
     # model params
     cₛ = sqrt(10) # m/s
+    cᶻ = cₛ
     ρₒ = 1 # kg/m³
     μ = 0 # 1e-6,   # m²/s
     ν = 0 # 1e-3   # m²/s
@@ -62,7 +64,7 @@ let
     resolution = (; N, Nʰ, Nᶻ)
     domain = (; min_height, max_height)
     timespan = (; dt, nout, timeend)
-    params = (; cₛ, ρₒ, μ, ν, κ)
+    params = (; cₛ, cᶻ, ρₒ, μ, ν, κ)
 
     config = Config(
         "roeOI",

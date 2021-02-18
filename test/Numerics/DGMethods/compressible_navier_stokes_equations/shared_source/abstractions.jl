@@ -9,6 +9,7 @@ currently isotropic or anisotropic
 """
 
 abstract type Pressure end
+
 struct IsotropicPressure{T} <: Pressure
     cₛ::T # m/s
     ρₒ::T # kg/m³
@@ -26,8 +27,8 @@ end
     ρ = state.ρ
     ρₒ = i.ρₒ
 
-    k̂ = aux.orientation.∇ϕ
-    c² = i.cₛ^2 * I
+    k̂ = aux.orientation.∇Φ
+    c² = i.cₛ^2 * Diagonal(@SVector[1, 1, 1])
 
     p = ρ^2 / (2 * ρₒ) * c²
 
@@ -53,8 +54,8 @@ end
     ρ = state.ρ
     ρₒ = a.ρₒ
 
-    k̂ = aux.orientation.∇ϕ
-    c² = a.cₛ^2 * I + (a.cᶻ^2 - a.cₛ^2) * k̂ * k̂'
+    k̂ = aux.orientation.∇Φ
+    c² = a.cₛ^2 * I + (a.cᶻ^2 - a.cₛ^2) * k̂ ⊗ k̂
 
     p = ρ^2 / (2 * ρₒ) * c²
 
