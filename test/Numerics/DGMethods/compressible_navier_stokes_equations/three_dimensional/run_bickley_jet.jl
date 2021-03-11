@@ -38,12 +38,15 @@ parameters = (
     ϵ = 0.1,  # perturbation size for initial condition
     l = 0.5, # Gaussian width
     k = 0.5, # Sinusoidal wavenumber
+    ρₒ = 1,  # reference density
 )
 
+FT = Float64
+
 physics = FluidPhysics(;
-    pressure = IsotropicPressure{Float64}(cₛ = sqrt(10), ρₒ = 1),
+    pressure = IsotropicPressure{FT}(cₛ = sqrt(10), ρₒ = parameters.ρₒ),
     advection = NonLinearAdvectionTerm(),
-    dissipation = ConstantViscosity{Float64}(μ = 0, ν = 0, κ = 0),
+    dissipation = ConstantViscosity{FT}(μ = 0, ν = 0, κ = 0),
     coriolis = nothing,
     buoyancy = nothing,
 )
